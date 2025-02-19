@@ -91,7 +91,7 @@ public class CustomerIdentificationTest {
 
     List<CustomerIdentificationResponse> customerIdentificationResponseGet = Setup.verifyCustomerIdentification(environment, tenant,
         touchpointToken, customerId);
-    CustomerIdentificationResponse firstIdentification = customerIdentificationResponseGet.getFirst();
+    CustomerIdentificationResponse firstIdentification = customerIdentificationResponseGet.get(0);
 
     LOG.info("Retrieved identification externalIdentificationNumber: {}", firstIdentification.externalIdentificationNumber());
     LOG.info("Retrieved identification externalIdentificationTypeNumber: {}", firstIdentification.externalIdentificationTypeNumber());

@@ -11,10 +11,10 @@
     <version>3.18.2</version>
   </parent>
 
-  <artifactId>loyalty-cloud-system-test</artifactId>
+  <artifactId>prepaid-cloud-system-test</artifactId>
   <version>1.0-SNAPSHOT</version>
 
-  <name>Loyalty Legends - Loyalty Cloud System Tests</name>
+  <name>Prepaid Cloud System Tests</name>
 
   <properties>
     <maven.compiler.source>21</maven.compiler.source>
