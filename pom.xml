@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <!-- Parent project configuration -->
+  <parent>
+    <groupId>com.knistr</groupId>
+    <artifactId>parent-quarkus-maven</artifactId>
+    <version>3.18.2</version>
+  </parent>
+
+  <artifactId>loyalty-cloud-system-test</artifactId>
+  <version>1.0-SNAPSHOT</version>
+
+  <name>Loyalty Legends - Loyalty Cloud System Tests</name>
+
+  <properties>
+    <maven.compiler.source>21</maven.compiler.source>
+    <maven.compiler.target>21</maven.compiler.target>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+  </properties>
+
+
+  <dependencies>
+    <!-- Quarkus Core -->
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-core</artifactId>
+      <scope>provided</scope>
+    </dependency>
+
+    <!-- Quarkus Hibernate ORM -->
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-hibernate-orm</artifactId>
+      <scope>provided</scope>
+    </dependency>
+
+    <!-- Quarkus SmallRye JWT Build (for token generation) -->
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-smallrye-jwt-build</artifactId>
+      <scope>provided</scope>
+    </dependency>
+
+    <!-- Arc dependency for Dependency Injection -->
+    <dependency>
+      <groupId>io.quarkus.arc</groupId>
+      <artifactId>arc</artifactId>
+      <scope>provided</scope>
+    </dependency>
+
+    <!-- Quarkus Test support -->
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-junit5</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <!-- Rest-Assured for API Testing -->
+    <dependency>
+      <groupId>io.rest-assured</groupId>
+      <artifactId>rest-assured</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <!-- SmallRye Config for configuration management -->
+    <dependency>
+      <groupId>io.smallrye.config</groupId>
+      <artifactId>smallrye-config</artifactId>
+      <version>3.11.2</version>
+      <scope>test</scope>
+    </dependency>
+
+
+    <!-- Resteasy JSON Binding Provider -->
+    <dependency>
+      <groupId>org.jboss.resteasy</groupId>
+      <artifactId>resteasy-json-binding-provider</artifactId>
+      <version>6.2.11.Final</version>
+      <scope>test</scope>
+    </dependency>
+
+    <!-- MicroProfile Rest Client -->
+    <dependency>
+      <groupId>org.jboss.resteasy.microprofile</groupId>
+      <artifactId>microprofile-rest-client</artifactId>
+      <version>3.0.1.Final</version>
+      <scope>test</scope>
+    </dependency>
+
+    <!-- JUnit for testing -->
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter-api</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter-engine</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <!-- Mocking framework -->
+    <dependency>
+      <groupId>org.mockito</groupId>
+      <artifactId>mockito-core</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <!-- WireMock for mocking external HTTP services in tests -->
+    <dependency>
+      <groupId>org.wiremock</groupId>
+      <artifactId>wiremock</artifactId>
+      <version>3.12.0</version>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <!-- Build plugins for Quarkus and ArchUnit -->
+  <build>
+    <plugins>
+      <!-- Quarkus Maven Plugin -->
+      <plugin>
+        <groupId>io.quarkus</groupId>
+        <artifactId>quarkus-maven-plugin</artifactId>
+        <version>${quarkus.platform.version}</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>build</goal>
+              <goal>generate-code</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
+      <!-- ArchUnit Maven Plugin for architecture validation -->
+      <plugin>
+        <groupId>com.societegenerale.commons</groupId>
+        <artifactId>arch-unit-maven-plugin</artifactId>
+      </plugin>
+    </plugins>
+  </build>
+</project>

@@ -1,0 +1,70 @@
+name: Build
+on:
+  push:
+    branches:
+      - 'develop'
+      - 'main'
+  pull_request:
+    branches:
+      - '**'
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Clone
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GH_PRIVILEGED_TOKEN }}
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+      - name: Configure Git signing
+        run: |
+          GIT_EMAIL=cloud-admin@knistr.com
+          echo "${GPG_KEY}" |  gpg --dearmor | gpg --batch --yes --import -
+          GPG_KEY_ID=$(gpg --list-secret-key --keyid-format long --with-colons ${GIT_EMAIL}  | grep sec | cut -f5 -d:)
+          cat << EOF > /tmp/gpg-with-passphrase
+          #!/bin/sh
+          gpg --passphrase \${GPG_PASSPHRASE} --batch --pinentry-mode loopback --no-tty "\$@"
+          EOF
+          chmod +x /tmp/gpg-with-passphrase
+          ls -l /tmp/gpg-with-passphrase
+          git config --global gpg.program "/tmp/gpg-with-passphrase"
+          git config --global commit.gpgsign "true"
+          git config --global user.signingkey "${GPG_KEY_ID}"
+          git config --global user.name "KNISTR Bot"
+          git config --global user.email "${GIT_EMAIL}"
+        env:
+          GPG_KEY: ${{ secrets.GPG_KEY }}
+      - name: Cache Maven data
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-m2
+      - name: Build up cache
+        run: |
+          mkdir -p ~/.m2
+          echo "${MAVEN_SETTINGS}" > ~/.m2/settings.xml
+          maven_temp_dir="$(mktemp -d)"
+          cp pom.xml "${maven_temp_dir}"
+          pushd "${maven_temp_dir}"
+          mvn verify || true
+          sleep 10
+          popd
+          rm -rf "${maven_temp_dir}"
+        env:
+          MAVEN_SETTINGS: ${{ secrets.MAVEN_SETTINGS }}
+          MAVEN_OPTS: >
+            -Dmaven.wagon.http.retryHandler.count=5
+      - name: Build artifact
+        run: |
+          mvn verify -DskipTests
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          MAVEN_SETTINGS: ${{ secrets.MAVEN_SETTINGS }}
+          MAVEN_OPTS: >
+            -Dmaven.wagon.http.retryHandler.count=5

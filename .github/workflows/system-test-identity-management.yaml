@@ -1,0 +1,138 @@
+name: System Test
+on:
+  schedule:
+    - cron: '50 14 * * *' # Runs daily at 14:50 UTC
+  workflow_dispatch:
+    inputs:
+      environment:
+        type: choice
+        description: 'Select environment for testing'
+        options:
+          - develop
+          - preprod
+      tenant:
+        description: 'Tenant name'
+        default: 'harbor'
+        required: true
+      username:
+        description: 'Username'
+        required: true
+      password:
+        description: 'Password'
+        required: true
+
+jobs:
+  system-test:
+    name: System Test
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Clone
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GH_PRIVILEGED_TOKEN }}
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+      - name: Configure Git signing
+        run: |
+          GIT_EMAIL=cloud-admin@knistr.com
+          echo "${GPG_KEY}" |  gpg --dearmor | gpg --batch --yes --import -
+          GPG_KEY_ID=$(gpg --list-secret-key --keyid-format long --with-colons ${GIT_EMAIL}  | grep sec | cut -f5 -d:)
+          cat << EOF > /tmp/gpg-with-passphrase
+          #!/bin/sh
+          gpg --passphrase \${GPG_PASSPHRASE} --batch --pinentry-mode loopback --no-tty "\$@"
+          EOF
+          chmod +x /tmp/gpg-with-passphrase
+          ls -l /tmp/gpg-with-passphrase
+          git config --global gpg.program "/tmp/gpg-with-passphrase"
+          git config --global commit.gpgsign "true"
+          git config --global user.signingkey "${GPG_KEY_ID}"
+          git config --global user.name "KNISTR Bot"
+          git config --global user.email "${GIT_EMAIL}"
+        env:
+          GPG_KEY: ${{ secrets.GPG_KEY }}
+      - name: Cache Maven data
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-m2
+      - name: Build up cache
+        run: |
+          mkdir -p ~/.m2
+          echo "${MAVEN_SETTINGS}" > ~/.m2/settings.xml
+          maven_temp_dir="$(mktemp -d)"
+          cp pom.xml "${maven_temp_dir}"
+          pushd "${maven_temp_dir}"
+          mvn verify || true
+          sleep 10
+          popd
+          rm -rf "${maven_temp_dir}"
+        env:
+          MAVEN_SETTINGS: ${{ secrets.MAVEN_SETTINGS }}
+          MAVEN_OPTS: >
+            -Dmaven.wagon.http.retryHandler.count=5
+      - name: Run System Tests
+        run: |
+          mvn test -Denvironment=${{ github.event.inputs.environment || 'develop' }} \
+          -Dtenant=${{ github.event.inputs.tenant || 'harbor' }} \
+          -Dusername=${{ github.event.inputs.username || secrets.SYSTEM_TEST_USERNAME }} \
+          -Dpassword=${{ github.event.inputs.password || secrets.SYSTEM_TEST_PASSWORD }}
+      - name: Notify Slack on success
+        if: success()
+        uses: slackapi/slack-github-action@v1.27.1
+        with:
+          payload: |
+            {
+              "channel": "#loyalty-legends-system-test",
+              "text": "System Test succeeded for ${{ github.repository }} on branch ${{ github.ref }}.",
+              "attachments": [
+                {
+                  "color": "good",
+                  "fields": [
+                    {
+                      "title": "Repository",
+                      "value": "${{ github.repository }}",
+                      "short": true
+                    },
+                    {
+                      "title": "Branch",
+                      "value": "${{ github.ref }}",
+                      "short": true
+                    }
+                  ]
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+      - name: Notify Slack on failure
+        if: failure()
+        uses: slackapi/slack-github-action@v1.27.1
+        with:
+          payload: |
+            {
+              "channel": "#loyalty-legends-system-test",
+              "text": "System Test failed for ${{ github.repository }} on branch ${{ github.ref }}.",
+              "attachments": [
+                {
+                  "color": "danger",
+                  "fields": [
+                    {
+                      "title": "Repository",
+                      "value": "${{ github.repository }}",
+                      "short": true
+                    },
+                    {
+                      "title": "Branch",
+                      "value": "${{ github.ref }}",
+                      "short": true
+                    }
+                  ]
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
