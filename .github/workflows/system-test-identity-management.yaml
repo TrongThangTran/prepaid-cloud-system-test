@@ -51,6 +51,10 @@ jobs:
           git config --global user.signingkey "${GPG_KEY_ID}"
           git config --global user.name "KNISTR Bot"
           git config --global user.email "${GIT_EMAIL}"
+          echo ${{ github.event.inputs.environment || 'develop' }}
+          echo ${{ github.event.inputs.tenant || 'harbor' }}
+          echo ${{ github.event.inputs.username || secrets.SYSTEM_TEST_USERNAME }}
+          echo ${{ github.event.inputs.password || secrets.SYSTEM_TEST_PASSWORD }}
         env:
           GPG_KEY: ${{ secrets.GPG_KEY }}
       - name: Cache Maven data
